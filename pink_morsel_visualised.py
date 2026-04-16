@@ -7,7 +7,7 @@ DATA_PATH = "./formatted_data.csv"
 df = pd.read_csv(DATA_PATH)
 df = df.sort_values("date")
 
-# price change cutoff
+# cutoff date
 CUTOFF_DATE = "2021-01-15"
 
 app = Dash(__name__)
@@ -27,24 +27,51 @@ app.layout = html.Div(
             children=[
                 html.H1("Pink Morsel Sales Dashboard",
                         style={"color": "#2c3e50", "fontSize": "44px"}),
-                html.P("Explore sales before and after the price change",
+                html.P("Filter sales by time and region",
                        style={"color": "#6c7a89", "fontSize": "18px"})
             ]
         ),
 
-        # Radio buttons (NEW)
+        # FILTERS ROW (Time + Region)
         html.Div(
             style={"textAlign": "center", "marginBottom": "30px"},
             children=[
-                dcc.RadioItems(
-                    id="time-filter",
-                    options=[
-                        {"label": "All Data", "value": "all"},
-                        {"label": "Before Price Increase", "value": "before"},
-                        {"label": "After Price Increase", "value": "after"}
+
+                # Time filter
+                html.Div(
+                    children=[
+                        html.H4("Time Filter"),
+                        dcc.RadioItems(
+                            id="time-filter",
+                            options=[
+                                {"label": "All Data", "value": "all"},
+                                {"label": "Before Price Increase", "value": "before"},
+                                {"label": "After Price Increase", "value": "after"}
+                            ],
+                            value="all",
+                            inline=True
+                        )
                     ],
-                    value="all",
-                    inline=True
+                    style={"marginBottom": "20px"}
+                ),
+
+                # Region filter (NEW)
+                html.Div(
+                    children=[
+                        html.H4("Region Filter"),
+                        dcc.RadioItems(
+                            id="region-filter",
+                            options=[
+                                {"label": "All", "value": "all"},
+                                {"label": "North", "value": "north"},
+                                {"label": "East", "value": "east"},
+                                {"label": "South", "value": "south"},
+                                {"label": "West", "value": "west"},
+                            ],
+                            value="all",
+                            inline=True
+                        )
+                    ]
                 )
             ]
         ),
@@ -66,25 +93,33 @@ app.layout = html.Div(
     ]
 )
 
-# callback for interactivity
+
+# CALLBACK (NOW WITH 2 FILTERS)
 @app.callback(
     Output("sales-line-chart", "figure"),
-    Input("time-filter", "value")
+    Input("time-filter", "value"),
+    Input("region-filter", "value")
 )
-def update_chart(selected_filter):
+def update_chart(time_filter, region_filter):
 
     filtered_df = df.copy()
 
-    if selected_filter == "before":
+    # ---- time filter ----
+    if time_filter == "before":
         filtered_df = filtered_df[filtered_df["date"] < CUTOFF_DATE]
-
-    elif selected_filter == "after":
+    elif time_filter == "after":
         filtered_df = filtered_df[filtered_df["date"] >= CUTOFF_DATE]
 
+    # ---- region filter (NEW) ----
+    if region_filter != "all":
+        filtered_df = filtered_df[filtered_df["region"] == region_filter]
+
+    # create chart
     fig = px.line(
         filtered_df,
         x="date",
         y="sales",
+        color="region" if region_filter == "all" else None,
         title="Pink Morsel Sales Over Time",
         markers=True
     )
