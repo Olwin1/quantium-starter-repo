@@ -2,13 +2,13 @@ import pandas as pd
 from dash import Dash, html, dcc
 import plotly.express as px
 
-FILE_PATH = "./formatted_data.csv"
+DATA_PATH = "./formatted_data.csv"
 
-# load and prepare data
-df = pd.read_csv(FILE_PATH)
+# load + sort data
+df = pd.read_csv(DATA_PATH)
 df = df.sort_values("date")
 
-# build chart
+# create figure
 fig = px.line(
     df,
     x="date",
@@ -16,22 +16,47 @@ fig = px.line(
     title="Pink Morsel Sales Over Time"
 )
 
-# create Dash app
 app = Dash(__name__)
 
-# layout components
-title = html.H1("Pink Morsel Sales Dashboard", id="page-title")
+app.layout = html.Div(
+    style={
+        "fontFamily": "Arial",
+        "backgroundColor": "#f7f7fb",
+        "padding": "30px"
+    },
+    children=[
 
-chart = dcc.Graph(
-    id="sales-chart",
-    figure=fig
+        html.Div(
+            children=[
+                html.H1(
+                    "Pink Morsel Sales Visualiser",
+                    style={
+                        "textAlign": "center",
+                        "color": "#2c3e50",
+                        "marginBottom": "10px"
+                    }
+                ),
+
+            ]
+        ),
+
+        # chart container (card-style feel)
+        html.Div(
+            children=[
+                dcc.Graph(
+                    id="sales-line-chart",
+                    figure=fig
+                )
+            ],
+            style={
+                "backgroundColor": "white",
+                "padding": "20px",
+                "borderRadius": "12px",
+                "boxShadow": "0 2px 10px rgba(0,0,0,0.1)"
+            }
+        )
+    ]
 )
 
-app.layout = html.Div(children=[
-    title,
-    chart
-])
-
-# run server
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
